@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080b14">
+<title>Study Sprint — Focus Dashboard</title>
+<style>
+  :root{
+    --bg:#070a12;
+    --panel:rgba(16,21,34,.78);
+    --panel-2:rgba(20,27,43,.88);
+    --border:rgba(255,255,255,.08);
+    --text:#f4f7ff;
+    --muted:#8993aa;
+    --accent:#7c5cff;
+    --accent-2:#19d3ae;
+    --danger:#ff5c7c;
+    --warning:#ffca5c;
+    --shadow:0 20px 60px rgba(0,0,0,.38);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; min-height:100vh; color:var(--text);
+    font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    background:
+      radial-gradient(circle at 10% 0%, rgba(124,92,255,.17), transparent 28%),
+      radial-gradient(circle at 90% 15%, rgba(25,211,174,.09), transparent 25%),
+      linear-gradient(145deg,#070a12 0%,#0a0e19 55%,#070a12 100%);
+  }
+  body:before{
+    content:""; position:fixed; inset:0; pointer-events:none; opacity:.28;
+    background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+    background-size:42px 42px;
+    mask-image:linear-gradient(to bottom,black,transparent 85%);
+  }
+  .app{width:min(1180px,calc(100% - 32px));margin:auto;padding:28px 0 44px;position:relative}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;gap:20px}
+  .brand{display:flex;align-items:center;gap:13px}
+  .logo{
+    width:44px;height:44px;border-radius:13px;display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--accent),#a66cff);
+    box-shadow:0 8px 28px rgba(124,92,255,.32);font-size:22px;font-weight:900
+  }
+  h1{font-size:20px;margin:0;letter-spacing:-.4px}
+  .subtitle{font-size:12px;color:var(--muted);margin-top:3px}
+  .date-chip{
+    color:#b9c2d6;border:1px solid var(--border);background:rgba(255,255,255,.035);
+    padding:9px 13px;border-radius:10px;font-size:12px;white-space:nowrap
+  }
+  .hero{
+    display:grid;grid-template-columns:1.25fr .75fr;gap:18px;margin-bottom:18px
+  }
+  .card{
+    border:1px solid var(--border);background:var(--panel);backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);border-radius:22px;box-shadow:var(--shadow)
+  }
+  .timer-card{padding:28px;min-height:395px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden}
+  .timer-card:after{
+    content:"";position:absolute;width:300px;height:300px;border-radius:50%;
+    background:radial-gradient(circle,rgba(124,92,255,.13),transparent 68%);top:-120px;right:-90px;pointer-events:none
+  }
+  .eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:1.7px;color:var(--accent-2);font-weight:800;margin-bottom:15px}
+  .timer-ring{
+    width:238px;height:238px;border-radius:50%;display:grid;place-items:center;
+    background:conic-gradient(var(--accent) var(--progress,0%),rgba(255,255,255,.055) 0);
+    padding:8px;position:relative;box-shadow:0 0 55px rgba(124,92,255,.13)
+  }
+  .timer-ring:before{content:"";position:absolute;inset:8px;border-radius:50%;background:#0b0f1b;border:1px solid rgba(255,255,255,.05)}
+  .timer-inner{z-index:1;text-align:center}
+  .time{font-variant-numeric:tabular-nums;font-size:50px;font-weight:800;letter-spacing:-2px}
+  .mode{color:var(--muted);font-size:12px;margin-top:2px}
+  .timer-actions{display:flex;gap:9px;margin-top:23px}
+  button,input{font:inherit}
+  button{border:0;cursor:pointer}
+  .btn{
+    padding:11px 18px;border-radius:11px;font-weight:750;font-size:13px;transition:.2s transform,.2s opacity,.2s background;
+  }
+  .btn:hover{transform:translateY(-1px)}
+  .btn:active{transform:translateY(0)}
+  .primary{color:white;background:linear-gradient(135deg,var(--accent),#965fff);box-shadow:0 8px 24px rgba(124,92,255,.22)}
+  .secondary{color:#c9d0df;background:rgba(255,255,255,.055);border:1px solid var(--border)}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .stat{padding:19px;min-height:116px;display:flex;flex-direction:column;justify-content:space-between}
+  .stat-top{display:flex;align-items:center;justify-content:space-between}
+  .stat-label{color:var(--muted);font-size:12px;font-weight:650}
+  .stat-icon{width:29px;height:29px;display:grid;place-items:center;border-radius:9px;background:rgba(124,92,255,.12);color:#a998ff}
+  .stat-value{font-size:27px;font-weight:800;letter-spacing:-1px}
+  .stat-small{font-size:11px;color:var(--muted)}
+  .main{display:grid;grid-template-columns:1.35fr .65fr;gap:18px}
+  .tasks-card,.progress-card{padding:23px}
+  .section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px}
+  .section-title{font-size:15px;font-weight:800;margin:0}
+  .section-note{font-size:11px;color:var(--muted);margin-top:4px}
+  .task-form{display:flex;gap:8px;margin-bottom:14px}
+  .task-input{
+    flex:1;min-width:0;background:rgba(255,255,255,.045);border:1px solid var(--border);
+    outline:none;color:var(--text);padding:12px 13px;border-radius:11px;font-size:13px
+  }
+  .task-input:focus{border-color:rgba(124,92,255,.65);box-shadow:0 0 0 3px rgba(124,92,255,.1)}
+  .task-input::placeholder{color:#687287}
+  .add-btn{width:44px;border-radius:11px;background:rgba(124,92,255,.15);color:#b7aaff;font-size:22px}
+  .task-list{display:flex;flex-direction:column;gap:8px;max-height:310px;overflow:auto;padding-right:3px}
+  .task-list::-webkit-scrollbar{width:5px}.task-list::-webkit-scrollbar-thumb{background:#252d40;border-radius:9px}
+  .task{
+    display:flex;align-items:center;gap:11px;padding:12px 11px;border:1px solid transparent;
+    background:rgba(255,255,255,.026);border-radius:11px;transition:.18s
+  }
+  .task:hover{background:rgba(255,255,255,.045);border-color:var(--border)}
+  .check{
+    flex:0 0 19px;width:19px;height:19px;border:1px solid #465067;border-radius:6px;background:transparent;
+    display:grid;place-items:center;color:#fff;font-size:12px
+  }
+  .task.done .check{background:var(--accent);border-color:var(--accent)}
+  .task-text{font-size:13px;flex:1;line-height:1.35}
+  .task.done .task-text{text-decoration:line-through;color:#6e778b}
+  .delete{background:transparent;color:#566078;font-size:16px;padding:4px}
+  .delete:hover{color:var(--danger)}
+  .empty{color:#677187;text-align:center;padding:30px 10px;font-size:12px}
+  .progress-wrap{margin-top:7px}
+  .progress-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:10px}
+  .progress-percent{font-size:31px;font-weight:850}
+  .progress-label{font-size:11px;color:var(--muted)}
+  .bar{height:9px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden}
+  .bar-fill{height:100%;width:0%;border-radius:inherit;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .45s ease}
+  .mini-stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:18px}
+  .mini{padding:13px;border-radius:12px;background:rgba(255,255,255,.035);border:1px solid var(--border)}
+  .mini strong{font-size:18px}.mini span{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+  .score{
+    margin-top:18px;padding:15px;border-radius:13px;background:linear-gradient(135deg,rgba(124,92,255,.12),rgba(25,211,174,.06));
+    border:1px solid rgba(124,92,255,.16)
+  }
+  .score-row{display:flex;justify-content:space-between;align-items:center}
+  .score strong{font-size:22px}.score span{font-size:11px;color:var(--muted)}
+  .tip{margin-top:9px;font-size:11px;color:#9ca6ba;line-height:1.45}
+  .footer{margin-top:17px;color:#5f687c;text-align:center;font-size:10px}
+
+  .focus-score{
+    position:relative;display:flex;align-items:center;justify-content:space-between;
+    gap:28px;padding:25px 29px;margin-bottom:18px;overflow:hidden;
+    background:
+      radial-gradient(circle at 82% 50%,rgba(124,92,255,.16),transparent 28%),
+      linear-gradient(135deg,rgba(18,24,39,.9),rgba(13,18,30,.76));
+  }
+  .focus-score:before{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(110deg,transparent 15%,rgba(255,255,255,.035) 50%,transparent 85%);
+    transform:translateX(-100%);animation:scoreShimmer 7s ease-in-out infinite
+  }
+  .focus-score-copy{position:relative;z-index:1}
+  .focus-score h2{font-size:21px;letter-spacing:-.55px;margin:0 0 6px}
+  .focus-score p{font-size:12px;color:var(--muted);margin:0;max-width:560px;line-height:1.5}
+  .score-breakdown{display:flex;gap:16px;margin-top:15px;color:#737d93;font-size:10px;text-transform:uppercase;letter-spacing:.7px}
+  .score-breakdown strong{color:#cfd6e6;font-size:12px;margin-right:3px}
+  .score-orbit{
+    --score:0%;flex:0 0 126px;width:126px;height:126px;border-radius:50%;
+    display:grid;place-items:center;position:relative;
+    background:conic-gradient(from -90deg,var(--accent) 0 var(--score),rgba(255,255,255,.055) var(--score) 100%);
+    box-shadow:0 0 38px rgba(124,92,255,.16);
+    transition:background .65s cubic-bezier(.22,1,.36,1),transform .35s ease
+  }
+  .score-orbit:before{
+    content:"";position:absolute;inset:7px;border-radius:50%;
+    background:#0a0f1a;border:1px solid rgba(255,255,255,.06)
+  }
+  .score-orbit:after{
+    content:"";position:absolute;inset:-5px;border-radius:50%;
+    border:1px solid rgba(124,92,255,.12);animation:orbitPulse 3s ease-in-out infinite
+  }
+  .score-orbit-inner{z-index:1;text-align:center;display:flex;align-items:baseline;justify-content:center}
+  .score-orbit-inner strong{font-size:35px;letter-spacing:-1.8px}
+  .score-orbit-inner span{font-size:10px;color:#657087;margin-left:2px}
+  .score-pop{animation:scorePop .55s cubic-bezier(.22,1,.36,1)}
+  .score-number-pop{animation:numberPop .5s cubic-bezier(.22,1,.36,1)}
+  @keyframes scoreShimmer{0%,55%{transform:translateX(-100%)}75%,100%{transform:translateX(100%)}}
+  @keyframes orbitPulse{0%,100%{opacity:.35;transform:scale(1)}50%{opacity:.8;transform:scale(1.045)}}
+  @keyframes scorePop{0%{transform:scale(1)}45%{transform:scale(1.08)}100%{transform:scale(1)}}
+  @keyframes numberPop{0%{transform:scale(1);opacity:.75}45%{transform:scale(1.2);opacity:1}100%{transform:scale(1);opacity:1}}
+  @media(max-width:540px){
+    .focus-score{padding:19px;gap:16px}.focus-score h2{font-size:18px}
+    .score-orbit{flex-basis:100px;width:100px;height:100px}
+    .score-orbit-inner strong{font-size:29px}.score-breakdown{gap:9px;flex-wrap:wrap}
+  }
+
+  @media(max-width:850px){.hero,.main{grid-template-columns:1fr}.timer-card{min-height:360px}}
+  @media(max-width:540px){
+    .app{width:min(100% - 20px,1180px);padding-top:18px}
+    header{align-items:flex-start}.date-chip{display:none}
+    .timer-card,.tasks-card,.progress-card{padding:18px;border-radius:17px}
+    .timer-ring{width:210px;height:210px}.time{font-size:43px}
+    .stats{grid-template-columns:1fr 1fr}.stat{min-height:100px;padding:14px}
+    .stat-value{font-size:23px}.timer-actions .btn{padding:10px 14px}
+  }
+
+/* Premium StudySprint visual layer */
+:root{
+  --bg:#05070d;--panel:rgba(15,20,32,.64);--panel-strong:rgba(18,24,39,.78);
+  --border:rgba(255,255,255,.075);--border-bright:rgba(255,255,255,.13);
+  --text:#f7f8ff;--muted:#8e98ad;--accent:#8b6cff;--accent-2:#27e0bd;
+  --shadow:0 24px 80px rgba(0,0,0,.42);--ease:cubic-bezier(.22,1,.36,1)
+}
+body{background:
+ radial-gradient(900px 500px at 8% -10%,rgba(139,108,255,.22),transparent 62%),
+ radial-gradient(700px 460px at 94% 5%,rgba(39,224,189,.10),transparent 62%),
+ radial-gradient(650px 500px at 55% 100%,rgba(89,70,180,.08),transparent 65%),#05070d}
+body:after{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 30%,transparent 0,rgba(0,0,0,.18) 100%);z-index:-1}
+.app{width:min(1220px,calc(100% - 40px));padding:34px 0 48px}
+header{margin-bottom:30px}.brand{gap:14px}.logo{width:46px;height:46px;border-radius:14px;position:relative;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 12px 35px rgba(139,108,255,.28)}
+.logo:after{content:"";position:absolute;inset:1px;border-radius:13px;background:linear-gradient(135deg,rgba(255,255,255,.22),transparent 45%);pointer-events:none}
+h1{font-size:21px;letter-spacing:-.65px}.subtitle{font-size:11px;letter-spacing:.25px;color:#778197}
+.date-chip{border-color:var(--border);background:rgba(255,255,255,.035);box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}
+.card{background:linear-gradient(145deg,rgba(21,27,44,.76),rgba(10,14,24,.68));border-color:var(--border);box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.035);transition:transform .35s var(--ease),border-color .35s,box-shadow .35s}
+.card:hover{border-color:var(--border-bright);box-shadow:0 28px 90px rgba(0,0,0,.46),inset 0 1px 0 rgba(255,255,255,.045)}
+.timer-card{min-height:420px;padding:32px}.timer-card:before{content:"";position:absolute;width:440px;height:440px;border-radius:50%;background:radial-gradient(circle,rgba(139,108,255,.13),transparent 64%);top:-190px;left:50%;transform:translateX(-50%);filter:blur(2px)}
+.timer-card:after{width:240px;height:240px;top:auto;right:-70px;bottom:-130px;background:radial-gradient(circle,rgba(39,224,189,.08),transparent 68%)}
+.eyebrow{font-size:10px;letter-spacing:2.1px;color:#9e8cff;margin-bottom:17px}.timer-ring{width:252px;height:252px;padding:9px;background:conic-gradient(from -90deg,var(--accent) var(--progress,0%),rgba(255,255,255,.055) 0);box-shadow:0 0 70px rgba(139,108,255,.16),inset 0 0 24px rgba(139,108,255,.05);transition:box-shadow .4s var(--ease),transform .4s var(--ease)}
+.timer-ring:before{inset:9px;background:radial-gradient(circle at 50% 25%,rgba(139,108,255,.09),#090d18 58%);box-shadow:inset 0 0 30px rgba(0,0,0,.45)}
+.timer-inner{position:relative}.time{font-size:56px;letter-spacing:-3px;text-shadow:0 0 35px rgba(139,108,255,.16)}.mode{font-size:11px;color:#7d879c;margin-top:4px}
+.timer-actions{margin-top:25px}.btn{border-radius:12px;position:relative;overflow:hidden;transition:transform .22s var(--ease),box-shadow .22s,background .22s}.btn:before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,rgba(255,255,255,.13),transparent 40%);opacity:0;transition:opacity .2s}.btn:hover:before{opacity:1}.primary{background:linear-gradient(135deg,#7c5cff,#a06cff);box-shadow:0 10px 28px rgba(124,92,255,.26)}.primary:hover{box-shadow:0 14px 34px rgba(124,92,255,.36)}
+.secondary{background:rgba(255,255,255,.045)}.secondary:hover{background:rgba(255,255,255,.075)}
+.stat{min-height:122px;padding:19px 20px}.stat-icon{background:rgba(139,108,255,.11);box-shadow:inset 0 0 0 1px rgba(139,108,255,.07)}.stat-value{font-size:29px}.stat-small{font-size:10px;letter-spacing:.2px}
+.tasks-card,.progress-card{padding:25px}.section-title{font-size:14px;letter-spacing:-.15px}.section-note{font-size:10px;letter-spacing:.2px}
+.task-form{margin-bottom:16px}.task-input{background:rgba(255,255,255,.035);border-color:rgba(255,255,255,.065);padding:13px 14px}.task-input:focus{border-color:rgba(139,108,255,.65);box-shadow:0 0 0 4px rgba(139,108,255,.08)}.add-btn{background:linear-gradient(135deg,rgba(139,108,255,.2),rgba(139,108,255,.08));border:1px solid rgba(139,108,255,.13);transition:.2s var(--ease)}.add-btn:hover{transform:translateY(-1px);background:rgba(139,108,255,.25)}
+.task{background:rgba(255,255,255,.026);border-color:transparent;transform:translateZ(0);transition:background .22s,transform .22s var(--ease),border-color .22s}.task:hover{transform:translateX(2px);background:rgba(255,255,255,.048)}.check{transition:.25s var(--ease);box-shadow:0 0 0 0 rgba(139,108,255,0)}.task.done .check{box-shadow:0 0 0 5px rgba(139,108,255,.08)}.delete{transition:.2s;color:#566078}.delete:hover{transform:scale(1.12)}
+.progress-percent{font-size:34px;letter-spacing:-1.6px}.bar{height:10px;background:rgba(255,255,255,.055);box-shadow:inset 0 1px 2px rgba(0,0,0,.3)}.bar-fill{background:linear-gradient(90deg,#8062ff,#9d70ff 45%,#27e0bd);box-shadow:0 0 18px rgba(39,224,189,.17)}
+.mini{background:rgba(255,255,255,.028);transition:transform .25s var(--ease),background .25s}.mini:hover{transform:translateY(-2px);background:rgba(255,255,255,.045)}.score{background:linear-gradient(135deg,rgba(139,108,255,.12),rgba(39,224,189,.055));box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}
+.footer{font-size:9px;letter-spacing:.2px}
+@keyframes timerPulse{0%{transform:scale(1);box-shadow:0 0 70px rgba(139,108,255,.16)}35%{transform:scale(1.025);box-shadow:0 0 90px rgba(139,108,255,.32)}100%{transform:scale(1);box-shadow:0 0 70px rgba(139,108,255,.16)}}
+@keyframes taskPop{0%{transform:scale(1)}45%{transform:scale(1.018);background:rgba(39,224,189,.10);border-color:rgba(39,224,189,.18)}100%{transform:scale(1)}}
+@keyframes checkPop{0%{transform:scale(.7);opacity:.3}60%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
+@keyframes numberPop{0%{transform:translateY(5px) scale(.96);opacity:.55}60%{transform:translateY(-2px) scale(1.04)}100%{transform:none;opacity:1}}
+.timer-ring.is-running{animation:timerPulse 2.4s ease-in-out infinite}.task.task-complete{animation:taskPop .48s var(--ease)}.task.task-complete .check{animation:checkPop .42s var(--ease)}.progress-pop{animation:numberPop .42s var(--ease)}
+@media(max-width:850px){.app{width:min(100% - 28px,1220px)}.timer-card{min-height:390px}}
+@media(max-width:540px){.app{width:calc(100% - 18px);padding-top:20px}.timer-card,.tasks-card,.progress-card{padding:19px}.timer-ring{width:218px;height:218px}.time{font-size:47px}.stats{gap:9px}.stat{padding:15px}.stat-value{font-size:24px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">S</div>
+      <div><h1>Study Sprint</h1><div class="subtitle">Focus better. Learn faster.</div></div>
+    </div>
+    <div class="date-chip" id="todayDate"></div>
+  </header>
+
+  <section class="hero">
+    <div class="card timer-card">
+      <div class="eyebrow" id="timerEyebrow">Deep Focus</div>
+      <div class="timer-ring" id="timerRing" style="--progress:0%">
+        <div class="timer-inner">
+          <div class="time" id="time">25:00</div>
+          <div class="mode">25 min sprint</div>
+        </div>
+      </div>
+      <div class="timer-actions">
+        <button class="btn primary" id="startBtn">Start Sprint</button>
+        <button class="btn secondary" id="pauseBtn">Pause</button>
+        <button class="btn secondary" id="resetBtn">Reset</button>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="card stat">
+        <div class="stat-top"><span class="stat-label">Sessions Today</span><span class="stat-icon">✓</span></div>
+        <div class="stat-value" id="sessions">0</div><div class="stat-small">completed sprints</div>
+      </div>
+      <div class="card stat">
+        <div class="stat-top"><span class="stat-label">Total Study Time</span><span class="stat-icon">◷</span></div>
+        <div class="stat-value" id="totalTime">0m</div><div class="stat-small">focused today</div>
+      </div>
+      <div class="card stat">
+        <div class="stat-top"><span class="stat-label">Productivity</span><span class="stat-icon">↗</span></div>
+        <div class="stat-value" id="productivity">0%</div><div class="stat-small">daily performance</div>
+      </div>
+      <div class="card stat">
+        <div class="stat-top"><span class="stat-label">Study Streak</span><span class="stat-icon">🔥</span></div>
+        <div class="stat-value" id="streak">0 days</div><div class="stat-small">keep the momentum</div>
+      </div>
+    </div>
+  </section>
+
+
+    <section class="focus-score card">
+      <div class="focus-score-copy">
+        <div class="eyebrow">Focus Score</div>
+        <h2>Today's focus momentum</h2>
+        <p id="motivation">Start a sprint and complete a task to build your score.</p>
+        <div class="score-breakdown">
+          <span><strong id="scoreTasks">0</strong> tasks</span>
+          <span><strong id="scoreSessions">0</strong> sessions</span>
+          <span><strong id="scoreMinutes">0</strong> min</span>
+        </div>
+      </div>
+      <div class="score-orbit" id="scoreOrbit" style="--score:0%">
+        <div class="score-orbit-inner">
+          <strong id="focusScore">0</strong>
+          <span>/ 100</span>
+        </div>
+      </div>
+    </section>
+
+  <section class="main">
+    <div class="card tasks-card">
+      <div class="section-head">
+        <div><h2 class="section-title">Today's Tasks</h2><div class="section-note" id="taskCount">0 tasks</div></div>
+      </div>
+      <form class="task-form" id="taskForm">
+        <input class="task-input" id="taskInput" maxlength="120" autocomplete="off" placeholder="What will you accomplish today?">
+        <button class="add-btn" aria-label="Add task" type="submit">+</button>
+      </form>
+      <div class="task-list" id="taskList"></div>
+    </div>
+
+    <div class="card progress-card">
+      <div class="section-head">
+        <div><h2 class="section-title">Daily Progress</h2><div class="section-note">Tasks completed today</div></div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-head"><div class="progress-percent" id="progressPercent">0%</div><div class="progress-label" id="progressLabel">0 of 0 completed</div></div>
+        <div class="bar"><div class="bar-fill" id="progressFill"></div></div>
+      </div>
+      <div class="mini-stats">
+        <div class="mini"><strong id="completedTasks">0</strong><span>Completed</span></div>
+        <div class="mini"><strong id="remainingTasks">0</strong><span>Remaining</span></div>
+      </div>
+      <div class="score">
+        <div class="score-row"><span>Productivity score</span><strong id="scoreValue">0</strong></div>
+        <div class="tip" id="scoreTip">Add a task and complete a sprint to start building your score.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">Your data stays in this browser • Saved automatically with local storage</div>
+</div>
+
+<script>
+(() => {
+  const KEY = "studySprint_v1";
+  const DURATION = 25 * 60;
+  const $ = id => document.getElementById(id);
+
+  const todayKey = () => {
+    const d = new Date();
+    return d.toISOString().slice(0,10);
+  };
+
+  const freshState = () => ({
+    tasks: [],
+    days: {},
+    timer: { remaining: DURATION, running: false }
+  });
+
+  let state;
+  try { state = JSON.parse(localStorage.getItem(KEY)) || freshState(); }
+  catch { state = freshState(); }
+
+  // Keep data compatible if the schema changes.
+  state.tasks = Array.isArray(state.tasks) ? state.tasks : [];
+  state.days = state.days && typeof state.days === "object" ? state.days : {};
+  state.timer = state.timer || {remaining:DURATION,running:false};
+  if (!state.days[todayKey()]) state.days[todayKey()] = {sessions:0, studySeconds:0};
+  let timerInterval = null;
+  let lastTick = Date.now();
+
+  const save = () => {
+    localStorage.setItem(KEY, JSON.stringify(state));
+  };
+
+  const today = () => state.days[todayKey()];
+  const escapeHtml = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  $("todayDate").textContent = new Intl.DateTimeFormat("en-IN",{weekday:"short",day:"numeric",month:"short",year:"numeric"}).format(new Date());
+
+  function renderTasks() {
+    const list = $("taskList");
+    const tasks = state.tasks;
+    $("taskCount").textContent = `${tasks.length} ${tasks.length === 1 ? "task" : "tasks"}`;
+    if (!tasks.length) {
+      list.innerHTML = '<div class="empty">No tasks yet. Add your first study goal above.</div>';
+      return;
+    }
+    list.innerHTML = tasks.map(t => `
+      <div class="task ${t.done ? "done" : ""}" data-id="${t.id}">
+        <button class="check" aria-label="${t.done ? "Mark incomplete" : "Mark complete"}">${t.done ? "✓" : ""}</button>
+        <div class="task-text">${escapeHtml(t.text)}</div>
+        <button class="delete" aria-label="Delete task">×</button>
+      </div>`).join("");
+  }
+
+  function formatTime(seconds) {
+    seconds = Math.max(0, Math.floor(seconds));
+    return `${String(Math.floor(seconds/60)).padStart(2,"0")}:${String(seconds%60).padStart(2,"0")}`;
+  }
+
+  function renderTimer() {
+    $("time").textContent = formatTime(state.timer.remaining);
+    const pct = ((DURATION - state.timer.remaining) / DURATION) * 100;
+    $("timerRing").style.setProperty("--progress", `${Math.max(0,Math.min(100,pct))}%`);
+    $("timerEyebrow").textContent = state.timer.running ? "In the zone" : (state.timer.remaining === DURATION ? "Deep Focus" : "Sprint paused");
+    $("startBtn").textContent = state.timer.running ? "Running…" : "Start Sprint";
+    document.title = state.timer.running ? `${formatTime(state.timer.remaining)} • Study Sprint` : "Study Sprint — Focus Dashboard";
+  }
+
+  function streakCount() {
+    let streak = 0;
+    const d = new Date();
+    while (true) {
+      const key = d.toISOString().slice(0,10);
+      const day = state.days[key];
+      if (day && day.sessions > 0) { streak++; d.setDate(d.getDate()-1); }
+      else break;
+    }
+    return streak;
+  }
+
+
+  function calculateFocusScore() {
+    const day = today();
+    const completedTasks = state.tasks.filter(t => t.done).length;
+    const sessions = day.sessions;
+    const studyMinutes = Math.floor(day.studySeconds / 60);
+
+    // Balanced 0–100 score:
+    // 40 pts from completed tasks, 35 pts from Pomodoro sessions,
+    // 25 pts from focused study time (up to 100 minutes).
+    const taskPoints = Math.min(completedTasks / 5, 1) * 40;
+    const sessionPoints = Math.min(sessions / 4, 1) * 35;
+    const timePoints = Math.min(studyMinutes / 100, 1) * 25;
+    return Math.min(100, Math.round(taskPoints + sessionPoints + timePoints));
+  }
+
+  function motivationFor(score) {
+    if (score === 0) return "Start a sprint and complete a task to build your score.";
+    if (score < 25) return "Good start. One focused sprint can move the needle.";
+    if (score < 50) return "You're building momentum. Keep the focus going.";
+    if (score < 75) return "Strong focus today. You're in a productive rhythm.";
+    if (score < 90) return "Excellent work. Your consistency is showing.";
+    return "Outstanding focus. You've earned a seriously productive day.";
+  }
+
+  function animateFocusScore(score) {
+    const orbit = $("scoreOrbit");
+    const number = $("focusScore");
+    const previous = Number(orbit.dataset.score || 0);
+    orbit.dataset.score = score;
+    orbit.style.setProperty("--score", `${score}%`);
+    if (previous !== score) {
+      orbit.classList.remove("score-pop");
+      number.classList.remove("score-number-pop");
+      void orbit.offsetWidth;
+      void number.offsetWidth;
+      orbit.classList.add("score-pop");
+      number.classList.add("score-number-pop");
+    }
+    number.textContent = score;
+    $("motivation").textContent = motivationFor(score);
+    const day = today();
+    $("scoreTasks").textContent = state.tasks.filter(t => t.done).length;
+    $("scoreSessions").textContent = day.sessions;
+    $("scoreMinutes").textContent = Math.floor(day.studySeconds / 60);
+  }
+
+  function renderStats() {
+    const day = today();
+    const total = state.tasks.length;
+    const done = state.tasks.filter(t => t.done).length;
+    const pct = total ? Math.round(done / total * 100) : 0;
+    const minutes = Math.floor(day.studySeconds / 60);
+    const score = calculateFocusScore();
+
+    $("sessions").textContent = day.sessions;
+    $("totalTime").textContent = minutes >= 60 ? `${Math.floor(minutes/60)}h ${minutes%60}m` : `${minutes}m`;
+    $("productivity").textContent = `${score}%`;
+    $("streak").textContent = `${streakCount()} ${streakCount() === 1 ? "day" : "days"}`;
+    $("progressPercent").textContent = `${pct}%`;
+    $("progressLabel").textContent = `${done} of ${total} completed`;
+    $("progressFill").style.width = `${pct}%`;
+    $("completedTasks").textContent = done;
+    $("remainingTasks").textContent = Math.max(0,total-done);
+    $("scoreValue").textContent = score;
+    animateFocusScore(score);
+    $("scoreTip").textContent = !total ? "Add a task and complete a sprint to start building your score."
+      : pct === 100 ? "All tasks complete. Excellent work today."
+      : day.sessions === 0 ? "Complete a 25-minute sprint to boost your score."
+      : "Nice momentum. Finish more tasks to push your score higher.";
+  }
+
+  function render() {
+    renderTasks(); renderStats(); renderTimer();
+  }
+
+  function animateProgress() {
+    const el = $("progressPercent");
+    el.classList.remove("progress-pop");
+    void el.offsetWidth;
+    el.classList.add("progress-pop");
+  }
+
+  function animateTask(id) {
+    requestAnimationFrame(() => {
+      const el = document.querySelector(`.task[data-id="${id}"]`);
+      if (!el) return;
+      el.classList.add("task-complete");
+      setTimeout(() => el.classList.remove("task-complete"), 520);
+    });
+  }
+
+  $("taskForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const input = $("taskInput");
+    const text = input.value.trim();
+    if (!text) return;
+    state.tasks.unshift({id: Date.now().toString(36) + Math.random().toString(36).slice(2,7), text, done:false});
+    input.value = "";
+    save(); render();
+    input.focus();
+  });
+
+  $("taskList").addEventListener("click", e => {
+    const taskEl = e.target.closest(".task");
+    if (!taskEl) return;
+    const id = taskEl.dataset.id;
+    const task = state.tasks.find(t => t.id === id);
+    if (!task) return;
+    if (e.target.closest(".check")) {
+      const wasDone = task.done;
+      task.done = !task.done;
+      save(); render();
+      if (!wasDone && task.done) { animateTask(id); animateProgress(); }
+      return;
+    }
+    else if (e.target.closest(".delete")) state.tasks = state.tasks.filter(t => t.id !== id);
+    save(); render();
+  });
+
+  function startTimer() {
+    if (state.timer.running) return;
+    state.timer.running = true;
+    lastTick = Date.now();
+    $("timerRing").classList.add("is-running");
+    timerInterval = setInterval(() => {
+      const now = Date.now();
+      const elapsed = Math.max(1, Math.round((now - lastTick)/1000));
+      lastTick = now;
+      state.timer.remaining -= elapsed;
+      today().studySeconds += elapsed;
+      if (state.timer.remaining <= 0) {
+        state.timer.remaining = 0;
+        state.timer.running = false;
+        clearInterval(timerInterval);
+        timerInterval = null;
+        $("timerRing").classList.remove("is-running");
+        today().sessions++;
+        save(); render();
+        setTimeout(() => alert("🎉 Sprint complete! Great work. Your session has been saved."), 50);
+        return;
+      }
+      save(); render();
+    }, 1000);
+    render();
+  }
+
+  function pauseTimer() {
+    if (!state.timer.running) return;
+    state.timer.running = false;
+    clearInterval(timerInterval);
+    timerInterval = null;
+    $("timerRing").classList.remove("is-running");
+    save(); render();
+  }
+
+  function resetTimer() {
+    state.timer.running = false;
+    clearInterval(timerInterval);
+    timerInterval = null;
+    state.timer.remaining = DURATION;
+    $("timerRing").classList.remove("is-running");
+    save(); render();
+  }
+
+  $("startBtn").addEventListener("click", startTimer);
+  $("pauseBtn").addEventListener("click", pauseTimer);
+  $("resetBtn").addEventListener("click", resetTimer);
+
+  // If the tab is restored after sleep, do not silently count inactive time.
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && state.timer.running) {
+      lastTick = Date.now();
+    }
+  });
+
+  window.addEventListener("beforeunload", save);
+  render();
+})();
+</script>
+</body>
+</html>
